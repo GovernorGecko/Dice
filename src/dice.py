@@ -7,7 +7,6 @@
 import array
 import math
 import random
-from typing import ValuesView
 
 
 class Dice:
@@ -20,7 +19,7 @@ class Dice:
     """
 
     # Valid sides for our dice.
-    __valid_sides = [4, 6, 8, 10, 12, 20, 100]
+    __valid_sides = [2, 4, 6, 8, 10, 12, 20, 100]
 
     __slots__ = ["__bonus", "__count", "__sides"]
 
@@ -29,9 +28,10 @@ class Dice:
         # Validate data
         if (
             not isinstance(sides, int) or
-            not isinstance(count, int)
+            not isinstance(count, int) or
+            not isinstance(bonus, int)
         ):
-            raise ValueError("Expected Integer for sides and count.")
+            raise ValueError("Expected Integer for Sides, Count, and Bonus.")
         elif sides not in self.__valid_sides:
             raise ValueError(f"Given sides not in {self.__valid_sides}")
 
@@ -64,16 +64,16 @@ class Dice:
         """
         Scaled values for dice
         returns:
-            float 
-        Gets a Scaled version of our Dice
+            Dice scaled to
         """
 
         # Go ahead and store values
         bonus = self.__bonus
         count = self.__count
         sides = self.__sides
-        
+
         # We step along
+        direction = 1 if scale > 0 else -1
         step = 0
         while step != scale:
             step = scale
