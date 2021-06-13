@@ -1,58 +1,86 @@
 """
-
     Dice.py
-
     Handles rolling of dice!
-
 """
 
 # Sys
 import array
 import math
 import random
-
-
-__all__ = ["Dice"]
+from typing import ValuesView
 
 
 class Dice:
     """
     Doice!
+    parameters:
+        int sides
+        int count
+        int bonus
     """
 
-    __slots__ = ["_count", "_sides"]
+    # Valid sides for our dice.
+    __valid_sides = [4, 6, 8, 10, 12, 20, 100]
 
-    def __init__(self, sides, count):
-        """
-        Init, how many sides?
-        """
+    __slots__ = ["__bonus", "__count", "__sides"]
 
-        self._sides = sides
-        self._count = count
+    def __init__(self, sides, count=1, bonus=0):
+
+        # Validate data
+        if (
+            not isinstance(sides, int) or
+            not isinstance(count, int)
+        ):
+            raise ValueError("Expected Integer for sides and count.")
+        elif sides not in self.__valid_sides:
+            raise ValueError(f"Given sides not in {self.__valid_sides}")
+
+        # Store vars
+        self.__bonus = bonus
+        self.__count = count
+        self.__sides = sides
 
     def __str__(self):
         """
-        Gets the String Version of this Dice Roll
+        returns:
+            str representation of this Dice
         """
 
-        return str(self._count) + "d" + str(self._sides)
+        return f"{self.__count}d{self.__sides}"
 
     def get_average(self):
         """
-        Gets the average for this DiceRoll
+        returns:
+            float average of this Dice
         """
 
         # Average
-        average = (((self._sides - 1) / 2) + 1) * self._count
+        average = (((self.__sides - 1) / 2) + 1) * self.__count
 
         # Return
-        return math.floor(average)
+        return math.floor(average + (self.__bonus * 0.5))
 
-    def get_scaled(self, scale):
+    def get_scaled(self, scale=1):
         """
+        Scaled values for dice
+        returns:
+            float 
         Gets a Scaled version of our Dice
         """
 
+        # Go ahead and store values
+        bonus = self.__bonus
+        count = self.__count
+        sides = self.__sides
+        
+        # We step along
+        step = 0
+        while step != scale:
+            step = scale
+
+        return Dice(sides, count, bonus)
+
+        """
         # Scale set at 0?
         if scale != 0:
 
@@ -63,7 +91,7 @@ class Dice:
                 d = DICE_PROGRESSION[i]
 
                 # This us?
-                if d._count == self._count and d._sides == self._sides:
+                if d.__count == self.__count and d.__sides == self.__sides:
 
                     # Found us?  Nice!
                     d_scale_index = i + scale
@@ -75,10 +103,11 @@ class Dice:
                         d_scale = DICE_PROGRESSION[d_scale_index]
 
                         # Return the scaled version!
-                        return Dice(d_scale._sides, d_scale._count)
+                        return Dice(d_scale.__sides, d_scale.__count)
 
         # Couldn't find or scale, pass a copy of our original.
-        return Dice(self._sides, self._count)
+        return Dice(self.__sides, self.__count)
+        """
 
     def roll(self, count_to_return=-1, drop_lowest=True):
         """
@@ -87,16 +116,16 @@ class Dice:
 
         # No count?  Set as self.
         if count_to_return == -1:
-            count_to_return = self._count
+            count_to_return = self.__count
 
         # Prepared the die range.  Starts at 1, < number_of_sides + 1.
-        die_range = range(1, (self._sides + 1))
+        die_range = range(1, (self.__sides + 1))
 
         # Array of die rolls
         dice_rolls = array.array('I')
 
         # Perform the rolls, may the odds ever be in your favor!
-        for _ in range(0, self._count):
+        for _ in range(0, self.__count):
             dice_rolls.insert(0, random.choice(die_range))
 
         # Start dropping dice!
@@ -188,11 +217,11 @@ class Dice:
         """
 
         if sides:
-            self._sides = sides
+            self.__sides = sides
         if count:
-            self._count = count
+            self.__count = count
 
-
+"""
 # Dice Progression
 # Dice					Mean		Max		Min
 DICE_PROGRESSION = [
@@ -213,8 +242,4 @@ DICE_PROGRESSION = [
     Dice(20, 1),    # 10.5		20		1
     Dice(3, 6)		# 12			18		6
 ]
-
-
-# We gotta be included!
-if __name__ == '__main__':
-    pass
+"""
