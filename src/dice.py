@@ -1,6 +1,5 @@
 """
     Dice.py
-    Handles rolling of dice!
 """
 
 # Sys
@@ -37,7 +36,7 @@ class Dice:
 
         # Store vars
         self.__bonus = bonus
-        self.__count = count
+        self.__count = count if count > 0 else 1
         self.__sides = sides
 
     def __str__(self):
@@ -58,56 +57,83 @@ class Dice:
         average = (((self.__sides - 1) / 2) + 1) * self.__count
 
         # Return
-        return math.floor(average + (self.__bonus * 0.5))
+        return average + self.__bonus
 
     def get_scaled(self, scale=1):
         """
-        Scaled values for dice
+        parameters:
+            int value to scale by.  This is how many sizes up/down
+            to scale.
         returns:
-            Dice scaled to
+            Dice scaled to scale
         """
 
-        # Go ahead and store values
-        bonus = self.__bonus
-        count = self.__count
-        sides = self.__sides
+        # Error?
+        if not isinstance(scale, int):
+            raise ValueError("Scale must be an int.")
 
-        # We step along
-        direction = 1 if scale > 0 else -1
-        step = 0
-        while step != scale:
-            step = scale
+        # Scaled dice to return!
+        scaled_dice = self
 
-        return Dice(sides, count, bonus)
+        # Which direction we going?
+        if scale > 0:
+            for _ in range(0, scale):
+                scaled_dice = scaled_dice.get_scaled_adjacent(1)
+        elif scale < 0:
+            for _ in range(scale, 0):
+                scaled_dice = scaled_dice.get_scaled_adjacent(-1)
 
+        # Return the scaled dice!
+        return scaled_dice        
+
+    def get_scaled_adjacent(self, direction=1):
         """
-        # Scale set at 0?
-        if scale != 0:
-
-            # First, find out which DICE_PROGRESSION we are at.
-            for i in range(0, len(DICE_PROGRESSION)):
-
-                # Store the dice
-                d = DICE_PROGRESSION[i]
-
-                # This us?
-                if d.__count == self.__count and d.__sides == self.__sides:
-
-                    # Found us?  Nice!
-                    d_scale_index = i + scale
-
-                    # This exist?
-                    if d_scale_index < len(DICE_PROGRESSION):
-
-                        # Grab
-                        d_scale = DICE_PROGRESSION[d_scale_index]
-
-                        # Return the scaled version!
-                        return Dice(d_scale.__sides, d_scale.__count)
-
-        # Couldn't find or scale, pass a copy of our original.
-        return Dice(self.__sides, self.__count)
+        parameters:
+            int direction, 1 or -1
+        returns:
+            Dice of our scaled.
         """
+
+        # Valid parameter?
+        if (
+            not isinstance(direction, int) or
+            direction not in [-1, 1]
+        ):
+            raise ValueError("Direction must be 1 or -1.")
+
+        # Min/Max of count.
+        minimum_count = self.__count - 5
+        if minimum_count < 0:
+            minimum_count = 0
+        maximum_count = self.__count + 5 
+
+        # Go either side of our count, comparing averages and taking the closest.
+        closest_dice = None
+        for count in range(minimum_count, maximum_count):
+            for sides in self.__valid_sides:
+                average = Dice(sides, count).get_average()                  
+                if (
+                    (
+                        direction == 1 and
+                        average > self.get_average() and
+                        (
+                            closest_dice is None or
+                            average < closest_dice.get_average()
+                        )
+                    ) or
+                    (
+                        direction == -1 and
+                        average < self.get_average() and
+                        (
+                            closest_dice is None or
+                            average > closest_dice.get_average()
+                        )
+                    )
+                ):
+                    closest_dice = Dice(sides, count)
+        
+        # Return
+        return closest_dice
 
     def roll(self, count_to_return=-1, drop_lowest=True):
         """
@@ -221,25 +247,3 @@ class Dice:
         if count:
             self.__count = count
 
-"""
-# Dice Progression
-# Dice					Mean		Max		Min
-DICE_PROGRESSION = [
-    Dice(4, 1),		# 2.5		4		1
-    Dice(2, 2),		# 3			4		2
-    Dice(6, 1), 	# 3.5		6		1
-    Dice(3, 2),		# 4			6		2
-    Dice(8, 1),		# 4.5		8		1
-    Dice(4, 2),		# 5			8		2
-    Dice(10, 1),    # 5.5		10		1
-    Dice(5, 2),		# 6			10		2
-    Dice(12, 1),    # 6.5		12		1
-    Dice(6, 2),		# 7			12		2
-    Dice(4, 3),		# 7.5		12		3
-    Dice(8, 2),		# 9			16		2
-    Dice(4, 4),		# 10			16		4
-    Dice(6, 3),		# 10.5		18		3
-    Dice(20, 1),    # 10.5		20		1
-    Dice(3, 6)		# 12			18		6
-]
-"""
