@@ -1,8 +1,8 @@
 """
     Dice.py
+    Most Specifically for Table-Top Games
 """
 
-# Sys
 import array
 import math
 import random
@@ -135,59 +135,92 @@ class Dice:
         # Return
         return closest_dice
 
-    def roll(self, count_to_return=-1, drop_lowest=True):
+    def roll(self):
         """
-        Roll them bones!
+        returns:
+            List of Integers
         """
 
-        # No count?  Set as self.
-        if count_to_return == -1:
-            count_to_return = self.__count
+        # Roll results!
+        roll_results = []
 
-        # Prepared the die range.  Starts at 1, < number_of_sides + 1.
-        die_range = range(1, (self.__sides + 1))
-
-        # Array of die rolls
-        dice_rolls = array.array('I')
-
-        # Perform the rolls, may the odds ever be in your favor!
+        # Create em!
         for _ in range(0, self.__count):
-            dice_rolls.insert(0, random.choice(die_range))
+            roll_results.append(random.choice(range(1, self.__sides + 1)))
 
-        # Start dropping dice!
-        while len(dice_rolls) > count_to_return:
+        # Return
+        return roll_results
 
-            # We want min or max?
-            dice_rolls_search = min(dice_rolls)
-            if not drop_lowest:
-                dice_rolls_search = max(dice_rolls)
-
-            # Now get the first index of the value and remove it!
-            dice_rolls.pop(dice_rolls.index(dice_rolls_search))
-
-        # Return it!
-        return dice_rolls
-
-    def roll_single(self):
+    def roll_drop_lowest(self, count=1):
         """
-        Rolls and returns a single die roll
+        parameters:
+            Int of lowest to drop
+        returns:
+            List of Int rolls
         """
 
-        # Array of Dice Rolls
-        dice_rolls = self.roll()
+        # Error checking
+        if (
+            not isinstance(count, int) or
+            count < 0 or
+            count >= self.__count
+        ):
+            raise ValueError(f"Count must be an integer, greater than 0 and less than {self.__count}")        
 
-        # Just return the first single.
-        return dice_rolls[0]
+        # Roll results!
+        roll_results = self.roll()
 
+        # Iterate!
+        for _ in range(0, count):
+            roll_results.remove(min(roll_results))
+
+        # Return
+        return roll_results
+
+    def roll_sum(self):
+        """
+        returns:
+            int of our rolls, added together.
+        """
+
+        # Get the results!       
+        roll_results = self.roll()
+
+        # Return!
+        return sum(roll_results)
+
+    def roll_sum_drop_lowest(self, count=0):
+        """
+        parameters:
+            Int of lowest to drop
+        returns:
+            Int sum of rolls
+        """
+
+        # Get the resutls!
+        roll_results = self.roll_drop_lowest(count)
+
+        # Return!
+        return sum(roll_results)
+
+    def roll_sum_with_culling(self, minimum=None, maximum=None, lowest_to_drop=0):
+        """
+        parameters:
+            Int/None minimum number to accept
+            Int/None maximum number to accept
+            Int lowest numbers to drop
+        returns:
+            Int sum of our rolls, after culling.
+        """
+        print(minimum)
+
+
+    """
     def roll_sum(
         self, sets_to_roll, maximum=None,
         minimum=None, count_to_return=1,
         drop_lowest=True
     ):
-        """
-        Builds an array of Dice Rolls, given criteria.
-        """
-
         # Array of Dice Rolls
         dice_rolls = array.array('I')
 
@@ -211,39 +244,4 @@ class Dice:
 
         # Returnnn!
         return dice_rolls
-
-    def roll_sum_list(
-        self, sets_to_roll, maximum=None,
-        minimum=None, count_to_return=1,
-        drop_lowest=True
-    ):
-        """
-        Returns alist of the sum roll
-        """
-
-        return self.roll_sum(
-            sets_to_roll, maximum, minimum,
-            count_to_return, drop_lowest
-        ).tolist()
-
-    def roll_sum_single(self):
-        """
-        We only need a single result?  Just returns the Integer
-        """
-
-        # Array of Dice Rolls
-        dice_rolls = self.roll_sum(1)
-
-        # Just return the first single.
-        return dice_rolls[0]
-
-    def update(self, sides=None, count=None):
-        """
-        Update our values
-        """
-
-        if sides:
-            self.__sides = sides
-        if count:
-            self.__count = count
-
+    """
