@@ -1,7 +1,6 @@
 # Dice
-Dice roller, meant typically for Board Games.
+Dice roller, meant typically for Table Top Games
 
 # TODO
-- Dice Scale
 - D20, D10 base classes.
 - Bonus

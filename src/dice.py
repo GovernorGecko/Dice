@@ -1,10 +1,7 @@
 """
     Dice.py
-    Most Specifically for Table-Top Games
 """
 
-import array
-import math
 import random
 
 
@@ -84,7 +81,7 @@ class Dice:
                 scaled_dice = scaled_dice.get_scaled_adjacent(-1)
 
         # Return the scaled dice!
-        return scaled_dice        
+        return scaled_dice
 
     def get_scaled_adjacent(self, direction=1):
         """
@@ -105,13 +102,14 @@ class Dice:
         minimum_count = self.__count - 5
         if minimum_count < 0:
             minimum_count = 0
-        maximum_count = self.__count + 5 
+        maximum_count = self.__count + 5
 
-        # Go either side of our count, comparing averages and taking the closest.
+        # Go either side of our count, comparing averages
+        # and taking the closest.
         closest_dice = None
         for count in range(minimum_count, maximum_count):
             for sides in self.__valid_sides:
-                average = Dice(sides, count).get_average()                  
+                average = Dice(sides, count).get_average()
                 if (
                     (
                         direction == 1 and
@@ -131,7 +129,7 @@ class Dice:
                     )
                 ):
                     closest_dice = Dice(sides, count)
-        
+
         # Return
         return closest_dice
 
@@ -165,7 +163,10 @@ class Dice:
             count < 0 or
             count >= self.__count
         ):
-            raise ValueError(f"Count must be an integer, greater than 0 and less than {self.__count}")        
+            raise ValueError(
+                f"Count must be an integer,"
+                f"greater than 0 and less than {self.__count}"
+            )
 
         # Roll results!
         roll_results = self.roll()
@@ -183,7 +184,7 @@ class Dice:
             int of our rolls, added together.
         """
 
-        # Get the results!       
+        # Get the results!
         roll_results = self.roll()
 
         # Return!
@@ -203,7 +204,9 @@ class Dice:
         # Return!
         return sum(roll_results)
 
-    def roll_sum_with_culling(self, minimum=None, maximum=None, lowest_to_drop=0):
+    def roll_sum_with_culling(
+        self, minimum=None, maximum=None, lowest_to_drop=0
+    ):
         """
         parameters:
             Int/None minimum number to accept
@@ -212,36 +215,16 @@ class Dice:
         returns:
             Int sum of our rolls, after culling.
         """
-        print(minimum)
 
+        # Get the sum of our roll, dropping the lowest.
+        roll_sum = self.roll_sum_drop_lowest(lowest_to_drop)
 
-    """
-    def roll_sum(
-        self, sets_to_roll, maximum=None,
-        minimum=None, count_to_return=1,
-        drop_lowest=True
-    ):
-        # Array of Dice Rolls
-        dice_rolls = array.array('I')
+        # Minimum?
+        if minimum is not None and roll_sum < minimum:
+            return minimum
+        # Maximum?
+        elif maximum is not None and roll_sum > maximum:
+            return maximum
 
-        # Iterate Dice Rolls
-        for _ in range(0, sets_to_roll):
-
-            # Roll the dice!
-            dice_rolled = self.roll(count_to_return, drop_lowest)
-
-            # Sum it!
-            dice_rolled_sum = sum(dice_rolled)
-
-            # Need to Max/Min?
-            if maximum is not None and dice_rolled_sum > maximum:
-                dice_rolled_sum = maximum
-            elif minimum is not None and dice_rolled_sum < minimum:
-                dice_rolled_sum = minimum
-
-            # Insert!
-            dice_rolls.insert(0, dice_rolled_sum)
-
-        # Returnnn!
-        return dice_rolls
-    """
+        # We good!
+        return roll_sum
