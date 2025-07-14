@@ -1,16 +1,25 @@
 """
-Dice Tests
+Dice Examples
 """
 
-from src.dice import Dice
+from src.dice import Dice, Die
 
-d = Dice(4, 3)
+die = Die(4)
+print(die)
+print(die.get_average())
+print(die.get_all_possible_rolls())
+print(die.roll())
 
-print(d)
-print(d.get_average())
-print(d.get_scaled(2))
-print(d.get_scaled(2).get_average())
-print(d.roll())
-print(d.roll_sum())
-print(d.roll_drop_lowest(2))
-print(d.roll_sum_with_culling(2, 8, 1))
+print("")
+dice = Dice()
+dice.add_die(4, 2)
+dice.add_die(6, 1)
+print(dice)
+print(dice.get_average())
+print(dice.roll_detail())
+print(dice.roll())
+print(dice.roll_sum())
+print(dice.get_die_sides())
+# print(dice.get_all_possible_rolls())
+print(dice.get_probability_sum_greater_than(6))
+print(dice.get_probability_sum_less_than(7))
