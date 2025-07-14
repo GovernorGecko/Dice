@@ -1,230 +1,185 @@
 """
-    Dice.py
+Dice.py
 """
 
+import itertools
+import math
+import operator
 import random
+
+
+class Die:
+    """
+    A singular Die
+    """
+
+    __slots__ = ["__sides"]
+
+    def __init__(self, sides: int):
+        if not isinstance(sides, int):
+            raise ValueError("Expected int for Sides")
+        self.__sides = sides if sides > 0 else 1
+
+    def __str__(self) -> str:
+        """
+        d{sides}
+        """
+
+        return f"d{self.get_sides()}"
+
+    def get_all_possible_rolls(self) -> list[int]:
+        """
+        Returns all possible combination of rolls
+        """
+
+        return [(i + 1) for i in range(self.get_sides())]
+
+    def get_average(self) -> float:
+        """
+        The average for this Die.
+        """
+
+        return ((float(self.get_sides()) - 1.0) / 2.0) + 1.0
+
+    def get_sides(self) -> int:
+        """
+        Returns the number of sides
+        """
+
+        return self.__sides
+
+    def roll(self) -> list[int]:
+        """
+        Roll
+        """
+
+        return random.choice(range(1, self.get_sides() + 1))
 
 
 class Dice:
     """
     Doice!
-    parameters:
-        int sides
-        int count
-        int bonus
     """
 
-    # Valid sides for our dice.
-    __valid_sides = [2, 4, 6, 8, 10, 12, 20, 100]
+    __slots__ = ["__dice"]
 
-    __slots__ = ["__bonus", "__count", "__sides"]
+    def __init__(self):
+        self.__dice = {}
 
-    def __init__(self, sides, count=1, bonus=0):
-
-        # Validate data
-        if (
-            not isinstance(sides, int) or
-            not isinstance(count, int) or
-            not isinstance(bonus, int)
-        ):
-            raise ValueError("Expected Integer for Sides, Count, and Bonus.")
-        elif sides not in self.__valid_sides:
-            raise ValueError(f"Given sides not in {self.__valid_sides}")
-
-        # Store vars
-        self.__bonus = bonus
-        self.__count = count if count > 0 else 1
-        self.__sides = sides
-
-    def __str__(self):
+    def __str__(self) -> str:
         """
-        returns:
-            str representation of this Dice
+        {count}d{sides}
         """
 
-        return f"{self.__count}d{self.__sides}"
+        return " ".join(f"{count}d{sides}" for sides, count in self.__dice.items())
 
-    def get_average(self):
+    def add_die(self, sides: int, count: int = 1):
         """
-        returns:
-            float average of this Dice
-        """
-
-        # Average
-        average = (((self.__sides - 1) / 2) + 1) * self.__count
-
-        # Return
-        return average + self.__bonus
-
-    def get_scaled(self, scale=1):
-        """
-        parameters:
-            int value to scale by.  This is how many sizes up/down
-            to scale.
-        returns:
-            Dice scaled to scale
+        Given the number of sides of a die, adds/updates its count to our Dice
         """
 
-        # Error?
-        if not isinstance(scale, int):
-            raise ValueError("Scale must be an int.")
+        if not isinstance(count, int) or count < 1:
+            raise ValueError(f"Count must be an integer and greater than 0")
+        elif not isinstance(sides, int) or sides < 1:
+            raise ValueError(f"Sides must be an integer and greater than 0")
 
-        # Scaled dice to return!
-        scaled_dice = self
+        if sides in self.__dice.keys():
+            self.__dice[sides] += count
+        else:
+            self.__dice[sides] = count
 
-        # Which direction we going?
-        if scale > 0:
-            for _ in range(0, scale):
-                scaled_dice = scaled_dice.get_scaled_adjacent(1)
-        elif scale < 0:
-            for _ in range(scale, 0):
-                scaled_dice = scaled_dice.get_scaled_adjacent(-1)
-
-        # Return the scaled dice!
-        return scaled_dice
-
-    def get_scaled_adjacent(self, direction=1):
+    def get_all_possible_rolls(self) -> list[list[int]]:
         """
-        parameters:
-            int direction, 1 or -1
-        returns:
-            Dice of our scaled.
+        Returns all possible combination of rolls
         """
 
-        # Valid parameter?
-        if (
-            not isinstance(direction, int) or
-            direction not in [-1, 1]
-        ):
-            raise ValueError("Direction must be 1 or -1.")
+        all_die_sides: list[list[int]] = []
 
-        # Min/Max of count.
-        minimum_count = self.__count - 5
-        if minimum_count < 0:
-            minimum_count = 0
-        maximum_count = self.__count + 5
+        for die_sides in self.get_die_sides():
+            all_die_sides.append(range(1, die_sides + 1))
 
-        # Go either side of our count, comparing averages
-        # and taking the closest.
-        closest_dice = None
-        for count in range(minimum_count, maximum_count):
-            for sides in self.__valid_sides:
-                average = Dice(sides, count).get_average()
-                if (
-                    (
-                        direction == 1 and
-                        average > self.get_average() and
-                        (
-                            closest_dice is None or
-                            average < closest_dice.get_average()
-                        )
-                    ) or
-                    (
-                        direction == -1 and
-                        average < self.get_average() and
-                        (
-                            closest_dice is None or
-                            average > closest_dice.get_average()
-                        )
-                    )
-                ):
-                    closest_dice = Dice(sides, count)
+        return list(itertools.product(*all_die_sides))
 
-        # Return
-        return closest_dice
-
-    def roll(self):
+    def get_average(self) -> float:
         """
-        returns:
-            List of Integers
+        The average for Rolls.
         """
 
-        # Roll results!
-        roll_results = []
+        total_average: float = 0.0
 
-        # Create em!
-        for _ in range(0, self.__count):
-            roll_results.append(random.choice(range(1, self.__sides + 1)))
+        for sides, count in self.__dice.items():
+            total_average += Die(sides).get_average() * float(count)
 
-        # Return
-        return roll_results
+        return total_average
 
-    def roll_drop_lowest(self, count=1):
+    def get_die_sides(self) -> list[int]:
         """
-        parameters:
-            Int of lowest to drop
-        returns:
-            List of Int rolls
+        Returns sides of each die
         """
 
-        # Error checking
-        if (
-            not isinstance(count, int) or
-            count < 0 or
-            count >= self.__count
-        ):
-            raise ValueError(
-                f"Count must be an integer,"
-                f"greater than 0 and less than {self.__count}"
-            )
+        die_sides: list[int] = []
 
-        # Roll results!
-        roll_results = self.roll()
+        for sides, count in self.__dice.items():
+            die_sides.extend([sides] * count)
 
-        # Iterate!
-        for _ in range(0, count):
-            roll_results.remove(min(roll_results))
+        return die_sides
 
-        # Return
-        return roll_results
-
-    def roll_sum(self):
+    def get_probability_outcome(self) -> int:
         """
-        returns:
-            int of our rolls, added together.
+        Probability outcome is sides * sides...
         """
 
-        # Get the results!
-        roll_results = self.roll()
+        return math.prod(self.get_die_sides())
 
-        # Return!
-        return sum(roll_results)
-
-    def roll_sum_drop_lowest(self, count=0):
+    def _get_probability_sum_with_operator(self, oper: operator, value: int) -> float:
         """
-        parameters:
-            Int of lowest to drop
-        returns:
-            Int sum of rolls
+        Handles probability math, given an operator (greater than...)
         """
 
-        # Get the resutls!
-        roll_results = self.roll_drop_lowest(count)
+        total_possibilities = 0
 
-        # Return!
-        return sum(roll_results)
+        for possibility in self.get_all_possible_rolls():
+            if oper(sum(possibility), value):
+                total_possibilities += 1
 
-    def roll_sum_with_culling(
-        self, minimum=None, maximum=None, lowest_to_drop=0
-    ):
+        return total_possibilities / self.get_probability_outcome()
+
+    def get_probability_sum_greater_than(self, value: int) -> float:
         """
-        parameters:
-            Int/None minimum number to accept
-            Int/None maximum number to accept
-            Int lowest numbers to drop
-        returns:
-            Int sum of our rolls, after culling.
+        Probability we roll greater than given sum
         """
 
-        # Get the sum of our roll, dropping the lowest.
-        roll_sum = self.roll_sum_drop_lowest(lowest_to_drop)
+        return self._get_probability_sum_with_operator(operator.gt, value)
 
-        # Minimum?
-        if minimum is not None and roll_sum < minimum:
-            return minimum
-        # Maximum?
-        elif maximum is not None and roll_sum > maximum:
-            return maximum
+    def get_probability_sum_less_than(self, value: int) -> float:
+        """
+        Probability we roll less than given sum
+        """
 
-        # We good!
-        return roll_sum
+        return self._get_probability_sum_with_operator(operator.lt, value)
+
+    def roll(self) -> list[int]:
+        """
+        Rolls, returning a single array
+        """
+
+        return [i for k in self.roll_detail().values() for i in k]
+
+    def roll_detail(self) -> dict[str, list[int]]:
+        """
+        Rolls, splitting out Dice as keys.
+        """
+
+        rolls = {}
+
+        for sides, count in self.__dice.items():
+            rolls[f"{count}d{sides}"] = [Die(sides).roll() for _ in range(count)]
+
+        return rolls
+
+    def roll_sum(self) -> int:
+        """
+        Rolls and returns the sum of the roll.
+        """
+
+        return sum(self.roll())
