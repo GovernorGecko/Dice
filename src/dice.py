@@ -6,6 +6,7 @@ import itertools
 import math
 import operator
 import random
+from typing import Callable
 
 
 class Die:
@@ -96,7 +97,7 @@ class Dice:
         all_die_sides: list[list[int]] = []
 
         for die_sides in self.get_die_sides():
-            all_die_sides.append(range(1, die_sides + 1))
+            all_die_sides.append(Die(die_sides).get_all_possible_rolls())
 
         return list(itertools.product(*all_die_sides))
 
@@ -136,6 +137,9 @@ class Dice:
         Handles probability math, given an operator (greater than...)
         """
 
+        if not isinstance(value, int):
+            raise ValueError("Value must be an int.")
+
         total_possibilities = 0
 
         for possibility in self.get_all_possible_rolls():
@@ -143,6 +147,13 @@ class Dice:
                 total_possibilities += 1
 
         return total_possibilities / self.get_probability_outcome()
+
+    def get_probability_sum_equals(self, value: int) -> float:
+        """
+        Probability we roll equal given sum
+        """
+
+        return self._get_probability_sum_with_operator(operator.eq, value)
 
     def get_probability_sum_greater_than(self, value: int) -> float:
         """
@@ -173,7 +184,7 @@ class Dice:
         rolls = {}
 
         for sides, count in self.__dice.items():
-            rolls[f"{count}d{sides}"] = [Die(sides).roll() for _ in range(count)]
+            rolls[sides] = [Die(sides).roll() for _ in range(count)]
 
         return rolls
 
@@ -183,3 +194,59 @@ class Dice:
         """
 
         return sum(self.roll())
+
+
+def dice_roll_drop(
+    sides: int, count: int, drop_func: Callable[[list[int]], int]
+) -> tuple[list[int], int]:
+    """
+    Roll count dice of size, dropping based off passed in func.
+    """
+
+    if not isinstance(sides, int) or sides < 1:
+        raise ValueError(f"Sides must be an integer and greater than 0")
+    elif not isinstance(count, int) or count < 1:
+        raise ValueError(f"Count must be an integer and greater than 0")
+
+    dice = Dice()
+    dice.add_die(sides, count)
+
+    roll_results = dice.roll()
+    highest_roll = drop_func(roll_results)
+    roll_results.remove(highest_roll)
+
+    return (roll_results, highest_roll)
+
+
+def dice_roll_drop_highest(sides: int, count: int = 1) -> tuple[list[int], int]:
+    """
+    Roll count dice of size, dropping the highest roll.
+    """
+
+    return dice_roll_drop(sides, count, max)
+
+
+def dice_roll_drop_lowest(sides: int, count: int = 1) -> tuple[list[int], int]:
+    """
+    Roll count dice of size, dropping the lowest roll.
+    """
+
+    return dice_roll_drop(sides, count, min)
+
+
+def dice_roll_sum_drop_highest(sides: int, count: int) -> int:
+    """
+    Rolls and drops the highest value given sides and count.
+    Returns the sum of the roll.
+    """
+
+    return sum(dice_roll_drop_highest(sides, count)[0])
+
+
+def dice_roll_sum_drop_lowest(sides: int, count: int) -> int:
+    """
+    Rolls and drops the lowest value given sides and count..
+    Returns the sum of the roll.
+    """
+
+    return sum(dice_roll_drop_lowest(sides, count)[0])
