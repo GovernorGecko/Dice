@@ -2,6 +2,7 @@
 Dice.py
 """
 
+import copy
 import itertools
 import math
 import operator
@@ -9,70 +10,55 @@ import random
 from typing import Callable
 
 
-class Die:
-    """
-    A singular Die
-    """
-
-    __slots__ = ["__sides"]
-
-    def __init__(self, sides: int):
-        if not isinstance(sides, int):
-            raise ValueError("Expected int for Sides")
-        self.__sides = sides if sides > 0 else 1
-
-    def __str__(self) -> str:
-        """
-        d{sides}
-        """
-
-        return f"d{self.get_sides()}"
-
-    def get_all_possible_rolls(self) -> list[int]:
-        """
-        Returns all possible combination of rolls
-        """
-
-        return [(i + 1) for i in range(self.get_sides())]
-
-    def get_average(self) -> float:
-        """
-        The average for this Die.
-        """
-
-        return ((float(self.get_sides()) - 1.0) / 2.0) + 1.0
-
-    def get_sides(self) -> int:
-        """
-        Returns the number of sides
-        """
-
-        return self.__sides
-
-    def roll(self) -> list[int]:
-        """
-        Roll
-        """
-
-        return random.choice(range(1, self.get_sides() + 1))
-
-
 class Dice:
     """
     Doice!
+
+    Can add Dice into the constructur with Tuples or single Ints.
+    Tuples  =   (Sides, Count)
+    Int     =   Sides
     """
 
     __slots__ = ["__dice"]
 
-    def __init__(self):
+    def __init__(self, *dice):
+        self.__dice: dict[int, int]
         self.__dice = {}
+
+        if dice:
+            for die in dice:
+                if isinstance(die, int):
+                    self.add_die(die)
+                elif (
+                    isinstance(die, tuple)
+                    and len(die) == 2
+                    and isinstance(die[0], int)
+                    and isinstance(die[1], int)
+                ):
+                    self.add_die(die[0], die[1])
 
     def __str__(self) -> str:
         """
         {count}d{sides}
         """
 
-        return " ".join(f"{count}d{sides}" for sides, count in self.__dice.items())
+        return " ".join(f"{count}d{sides}" for sides, count in self.get_dice().items())
+
+    def __add__(self, other):
+        """
+        Adds two sets of Dice together, returning a new Dice object.
+        """
+
+        if isinstance(other, Dice):
+            dice_copy: Dice = copy.deepcopy(self)
+
+            other: Dice
+            for sides, count in other.get_dice().items():
+                dice_copy.add_die(sides, count)
+
+            return dice_copy
+
+        return self
 
     def add_die(self, sides: int, count: int = 1):
         """
@@ -97,7 +83,7 @@ class Dice:
         all_die_sides: list[list[int]] = []
 
         for die_sides in self.get_die_sides():
-            all_die_sides.append(Die(die_sides).get_all_possible_rolls())
+            all_die_sides.append([(i + 1) for i in range(die_sides)])
 
         return list(itertools.product(*all_die_sides))
 
@@ -108,10 +94,17 @@ class Dice:
 
         total_average: float = 0.0
 
-        for sides, count in self.__dice.items():
-            total_average += Die(sides).get_average() * float(count)
+        for sides, count in self.get_dice().items():
+            total_average += (((float(sides) - 1.0) / 2.0) + 1.0) * float(count)
 
         return total_average
+
+    def get_dice(self) -> dict[int, int]:
+        """
+        Returns our dice dictionary, sorted by size
+        """
+
+        return dict(sorted(self.__dice.items()))
 
     def get_die_sides(self) -> list[int]:
         """
@@ -120,10 +113,24 @@ class Dice:
 
         die_sides: list[int] = []
 
-        for sides, count in self.__dice.items():
+        for sides, count in self.get_dice().items():
             die_sides.extend([sides] * count)
 
         return die_sides
+
+    def get_max_roll(self) -> int:
+        """
+        Returns max possible roll
+        """
+
+        return sum([sides * count for sides, count in self.get_dice().items()])
+
+    def get_min_roll(self) -> int:
+        """
+        Returns min possible roll
+        """
+
+        return sum([count for count in self.get_dice().values()])
 
     def get_probability_outcome(self) -> int:
         """
@@ -183,8 +190,8 @@ class Dice:
 
         rolls = {}
 
-        for sides, count in self.__dice.items():
-            rolls[sides] = [Die(sides).roll() for _ in range(count)]
+        for sides, count in self.get_dice().items():
+            rolls[sides] = [random.choice(range(1, sides + 1)) for _ in range(count)]
 
         return rolls
 
@@ -194,6 +201,14 @@ class Dice:
         """
 
         return sum(self.roll())
+
+
+D4 = Dice(4)
+D6 = Dice(6)
+D8 = Dice(8)
+D10 = Dice(10)
+D12 = Dice(12)
+D20 = Dice(20)
 
 
 def dice_roll_drop(
